@@ -11,30 +11,34 @@ public class LoreUtil {
 	
 	private static String seperator = ": ";
 	
-	public void setValue(ItemStack item, String str, int value) {
+	public static void setValue(ItemStack item, String str, int value) {
 		ItemMeta meta = item.getItemMeta();
 		List<String> lore = meta.getLore();
-		int index = 0;
 		if (lore == null) {
 			lore = new ArrayList<String>();
-		}
-		int count = 0;
-		for(String s : lore) {
-			if (s.contains(str)) {
-				index = count;
+			lore.add(str + seperator + value);
+		} else {
+			int count = 0;
+			boolean found = false;
+			for(String s : lore) {
+				if (s.contains(str)) {
+					found = true;
+					lore.set(count, str + seperator + value);
+					break;
+				}
+				count ++;
 			}
-			count ++;
+			if (!found) {
+				lore.add(str + seperator + value);
+			}
 		}
-		
-		lore.set(index, str + seperator + value);
 		meta.setLore(lore);
 		item.setItemMeta(meta);
 	}
 	
-	public Integer getValue(ItemStack item, String str) {
+	public static Integer getValue(ItemStack item, String str) {
 		ItemMeta meta = item.getItemMeta();
 		List<String> lore = meta.getLore();
-		
 		if (lore == null) {
 			return null;
 		}
@@ -49,5 +53,20 @@ public class LoreUtil {
 		}
 		
 		return null;
+	}
+
+	public static int getLevel(ItemStack item, String str) {
+		Integer level = LoreUtil.getValue(item, str);
+		return level == null ? 0 : level;
+	}
+	
+	public static void addLevel(ItemStack item, String str, int add) {
+		int level = getLevel(item, str);
+		level += add;
+		setLevel(item, str, level);
+	}
+	
+	public static void setLevel(ItemStack item, String str, int level) {
+		LoreUtil.setValue(item, str, level);
 	}
 }

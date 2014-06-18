@@ -54,6 +54,21 @@ public class AdvancedRecipe implements Recipe, Listener {
 	public void infiniteItem(ItemStack item) {
 		infinite.add(item);
 	}
+	
+	private boolean isInfinite(ItemStack item) {
+		for (ItemStack curr : infinite) {
+			if (item != null &&
+				curr != null &&
+				curr.getEnchantments().equals(item.getEnchantments()) &&
+				curr.getItemMeta().getLore().equals(item.getItemMeta().getLore()) &&
+				curr.getItemMeta().getDisplayName().equals(item.getItemMeta().getDisplayName()) &&
+				curr.getDurability() == item.getDurability() &&
+				curr.getData().equals(item.getData())) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onSetupCraft(InventoryClickEvent ev) {
@@ -71,7 +86,6 @@ public class AdvancedRecipe implements Recipe, Listener {
 						if (isUs(inv.getRecipe())) {
 							if (!checkInv(inv) && inv.getResult() != null) {
 								inv.setResult(null);
-								p.sendMessage("boo");
 								p.updateInventory();
 							}
 						}
@@ -82,7 +96,7 @@ public class AdvancedRecipe implements Recipe, Listener {
 	}
 	
 	//We want to be the last one that runs
-	@EventHandler(priority = EventPriority.LOWEST)
+	@EventHandler(priority = EventPriority.LOW)
 	public void onCraft(CraftItemEvent ev) {
 		final Player p = (Player)ev.getWhoClicked();
 		final CraftingInventory inv = ev.getInventory();
@@ -98,7 +112,7 @@ public class AdvancedRecipe implements Recipe, Listener {
 			for (ItemStack item : inv.getMatrix()) {
 				if (	item != null && //item exists
 						item.getAmount() != 0 && //Item is really there
-						!infinite.contains(item) && //We are not a many use item
+						!isInfinite(item) && //We are not a many use item
 						max > item.getAmount()) {
 					
 					max = item.getAmount();
@@ -112,12 +126,12 @@ public class AdvancedRecipe implements Recipe, Listener {
 			return;
 		}
 		//If we are here, we are good to continue crafting
-		
+
 		//Take care of infinite items
 		//After this we are modifying stack size so 
 		//DO NOT CANCEL AFTER THIS LINE
 		for (ItemStack item : inv.getMatrix()) {
-			if (this.infinite.contains(item)) {
+			if (isInfinite(item)) {
 				item.setAmount(item.getAmount() + amount);
 			}
 		}
@@ -190,7 +204,6 @@ public class AdvancedRecipe implements Recipe, Listener {
 			ShapelessRecipe sr = (ShapelessRecipe)r;
 			ShapelessRecipe srbase = (ShapelessRecipe)base;
 			if (! sr.getIngredientList().equals(srbase.getIngredientList())) {
-				//not us
 				return false;
 			}
 		} else if (r instanceof ShapedRecipe && base instanceof ShapedRecipe) {
