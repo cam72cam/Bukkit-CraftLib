@@ -10,7 +10,7 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class AdvancedShapedRecipe extends ShapedRecipe {
-private final AdvancedRecipe parent;
+	private final AdvancedRecipe parent;
 	
 	public AdvancedShapedRecipe(ItemStack result, JavaPlugin base) {
 		super(result);
@@ -36,6 +36,4 @@ private final AdvancedRecipe parent;
 	public void requireNone(Material m) {
 		parent.requireNone(m);
 	}
-	
-	//TODO override getIngredientMap
 }

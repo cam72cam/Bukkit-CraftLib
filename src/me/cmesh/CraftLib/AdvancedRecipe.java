@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.Inventory;
@@ -69,7 +70,44 @@ public class AdvancedRecipe implements Recipe, Listener {
 		}
 		return false;
 	}
+	
+	@EventHandler()
+	public void onOpenCraft(InventoryOpenEvent ev) {
+		final Inventory topInv = ev.getView().getTopInventory();
+		final Player p = (Player)ev.getPlayer();
+		if (topInv.getType() == InventoryType.WORKBENCH) {
+			final JavaPlugin pl = this.plugin; 
+			Bukkit.getScheduler().runTaskLater(this.plugin, 
+					new Runnable() {
+						@Override
+						@SuppressWarnings("deprecation")
+						public void run() {
+							CraftingInventory inv = (CraftingInventory)topInv;
+							//If we are here, the crafting grid is open, yet the recipe exists
+							//No player can put the items into the crafting table within 2 ticks
+							//hopefully
+							if (isUs(inv.getRecipe())) {
+								//p.sendMessage("HERE2!");
+								for(ItemStack i : inv.getMatrix()) {
+									if (i != null) {
+										setAttributes(i);
+									}
+								}
+								Bukkit.getScheduler().runTaskLater(pl, new Runnable() {
+									@Override
+									public void run() {
+										p.updateInventory();
+									}
+									
+								}, 1l);
+							}
+						}
+					}, 1l
+				);
+		}
+	}
 
+	
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onSetupCraft(InventoryClickEvent ev) {
 		final Inventory topInv = ev.getView().getTopInventory();
@@ -82,8 +120,9 @@ public class AdvancedRecipe implements Recipe, Listener {
 					@SuppressWarnings("deprecation")
 					public void run() {
 						CraftingInventory inv = (CraftingInventory)topInv;
-						//p.sendMessage(inv.getRecipe() + "" + count);
+						//p.sendMessage(inv.getRecipe() + "foobar");
 						if (isUs(inv.getRecipe())) {
+							//p.sendMessage("HERE3!");
 							if (!checkInv(inv) && inv.getResult() != null) {
 								inv.setResult(null);
 								p.updateInventory();
@@ -94,6 +133,7 @@ public class AdvancedRecipe implements Recipe, Listener {
 			);
 		}
 	}
+	
 	
 	//We want to be the last one that runs
 	@EventHandler(priority = EventPriority.LOW)
@@ -223,5 +263,21 @@ public class AdvancedRecipe implements Recipe, Listener {
 	@Override
 	public ItemStack getResult() {
 		return base.getResult();
+	}
+
+	public ItemStack setAttributes(ItemStack item) {
+		ItemMeta meta = item.getItemMeta();
+		Material itemtype = item.getType();
+		//Check Lore
+		if (this.lore.containsKey(itemtype) && this.lore.get(itemtype) != null) {
+			meta.setLore(this.lore.get(itemtype));
+			item.setItemMeta(meta);
+		}
+		
+		//Check Enchantments
+		if (this.enchantments.containsKey(itemtype) && this.enchantments.get(itemtype) != null) {
+			item.addUnsafeEnchantments(this.enchantments.get(itemtype));
+		}
+		return item;
 	}
 }
